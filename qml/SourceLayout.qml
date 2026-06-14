@@ -210,6 +210,27 @@ ListView {
                 Drag.hotSpot.x: width / 2
                 Drag.hotSpot.y: height / 2
 
+                // Glass surface for source items
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    radius: 6
+                    color: index == sideList.currentIndex
+                        ? (applicationAppearance.darkMode
+                            ? Qt.rgba(0.40, 0.60, 1.0, 0.12)
+                            : Qt.rgba(0.30, 0.50, 0.90, 0.08))
+                        : (applicationAppearance.darkMode
+                            ? Qt.rgba(0.18, 0.18, 0.22, 0.40)
+                            : Qt.rgba(0.96, 0.96, 0.98, 0.70))
+                    border.color: index == sideList.currentIndex
+                        ? Qt.rgba(0.40, 0.60, 1.0, 0.25)
+                        : (applicationAppearance.darkMode
+                            ? Qt.rgba(1.0, 1.0, 1.0, 0.04)
+                            : Qt.rgba(0, 0, 0, 0.04))
+                    border.width: 1
+                    z: -1
+                }
+
                 Loader {
                     id: loaded
                     property var modelData: dragArea.source

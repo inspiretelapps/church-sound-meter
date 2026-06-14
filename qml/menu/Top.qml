@@ -25,11 +25,13 @@ import OpenSoundMeterModule 1.0
 MenuBar {
     id: menuBar;
     style: MenuBarStyle{
-                background: Rectangle{ color:Material.backgroundColor}
+                background: Rectangle{
+                    color: applicationAppearance.darkMode ? theme.glassSurface : Qt.rgba(0.98, 0.98, 0.99, 0.95)
+                }
                 itemDelegate: Rectangle {
                     implicitWidth: menuBarLabel.contentWidth * 1.4
                     implicitHeight: menuBarLabel.contentHeight * 1.5
-                    color: styleData.selected || styleData.open ? accentColor : backgroundColor
+                    color: styleData.selected || styleData.open ? accentColor : "transparent"
                     Label {
                         id:menuBarLabel
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -41,8 +43,9 @@ MenuBar {
                 }
                 menuStyle: MenuStyle {
                     frame: Rectangle {
-                        color: backgroundColor
+                        color: applicationAppearance.darkMode ? theme.glassSurface : Qt.rgba(0.98, 0.98, 0.99, 0.95)
                         border.width: 0
+                        radius: 6
                     }
 
                     //FIXME: Colors doesn't set correctly from Material

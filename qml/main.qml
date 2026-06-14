@@ -65,12 +65,13 @@ ApplicationWindow {
     minimumWidth: 768
     minimumHeight: 540
     visibility: applicationAppearance.visibility
-    color: applicationAppearance.darkMode ? Material.backgroundColor : "#FFFFFF"
+    color: applicationAppearance.darkMode ? theme.chartBackground : "#FFFFFF"
     Material.theme: applicationAppearance.darkMode ? Material.Dark : Material.Light
     Material.accent: Material.Indigo
 
+    // Glass background layer
     Rectangle {
-        color: applicationAppearance.darkMode ? Material.backgroundColor : "#ECECEC"
+        color: applicationAppearance.darkMode ? theme.glassBackground : Qt.rgba(0.96, 0.96, 0.97, 1.0)
         height: applicationWindow.height
         anchors.fill: parent
         z: -1

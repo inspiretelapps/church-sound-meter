@@ -40,6 +40,17 @@ Item {
     property Item list : sideList
     property int colorIndex: 6;
 
+    // Glass sidebar surface
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 4
+        radius: theme.glassRadiusSmall
+        color: applicationAppearance.darkMode ? theme.glassSurface : Qt.rgba(0.98, 0.98, 0.99, 0.90)
+        border.color: applicationAppearance.darkMode ? theme.glassBorder : Qt.rgba(0, 0, 0, 0.06)
+        border.width: 1
+        z: -1
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 5

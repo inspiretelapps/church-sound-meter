@@ -25,6 +25,16 @@ Popup {
     modal: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    background: Rectangle {
+        radius: 16
+        color: applicationAppearance.darkMode
+            ? Qt.rgba(0.14, 0.14, 0.18, 0.92)
+            : Qt.rgba(0.96, 0.96, 0.98, 0.95)
+        border.color: applicationAppearance.darkMode
+            ? Qt.rgba(1.0, 1.0, 1.0, 0.08)
+            : Qt.rgba(0, 0, 0, 0.06)
+        border.width: 1
+    }
 
     Item {
         anchors.fill: parent
@@ -63,7 +73,7 @@ Popup {
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         Layout.fillWidth: true
                         font.pointSize: 20
-                        text: qsTr("Open Sound Meter %1").arg(appVersion)
+                        text: qsTr("Church Sound Meter %1").arg(appVersion)
                     }
 
                     Label {
@@ -72,22 +82,14 @@ Popup {
                         Layout.fillWidth: true
                         textFormat: Text.RichText
                         text: qsTr(
-                                "<a style='color:%1' href=\"https://opensoundmeter.com\">https://opensoundmeter.com</a><br/><br/>" +
-                                "Copyright 2017 — %2  Pavel Smokotnin. <br/>" +
+                                "<a style='color:%1' href=\"https://github.com/inspiretelapps/church-sound-meter\">github.com/inspiretelapps/church-sound-meter</a><br/><br/>" +
+                                "Based on Open Sound Meter by Pavel Smokotnin. <br/>" +
                                 "License: " +
                                 '<a style="color:%1" href="https://raw.githubusercontent.com/psmokotnin/osm/master/LICENSE">GPL v3.0</a>'
                             ).arg(Material.accentColor).arg(new Date().getFullYear())
                         onLinkActivated: Qt.openUrlExternally(link)
                      }
                 }
-            }
-
-            Label {
-                text: qsTr("Distributed under <b>pay what you want</b> model")
-                Layout.fillHeight: false
-                Layout.fillWidth: false
-                Layout.columnSpan: 2
-                onLinkActivated: Qt.openUrlExternally(link)
             }
 
             RowLayout {

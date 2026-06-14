@@ -29,5 +29,28 @@ Item {
     height: 50
     width: parent.width
 
-
+    // Glass background for source items
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 2
+        radius: 6
+        color: {
+            if (highlight)
+                return applicationAppearance.darkMode
+                    ? Qt.rgba(0.40, 0.60, 1.0, 0.15)
+                    : Qt.rgba(0.30, 0.50, 0.90, 0.10)
+            return applicationAppearance.darkMode
+                ? Qt.rgba(0.18, 0.18, 0.22, 0.45)
+                : Qt.rgba(0.96, 0.96, 0.98, 0.80)
+        }
+        border.color: {
+            if (highlight)
+                return Qt.rgba(0.40, 0.60, 1.0, 0.30)
+            return applicationAppearance.darkMode
+                ? Qt.rgba(1.0, 1.0, 1.0, 0.06)
+                : Qt.rgba(0, 0, 0, 0.05)
+        }
+        border.width: 1
+        z: -1
+    }
 }

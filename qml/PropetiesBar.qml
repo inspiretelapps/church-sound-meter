@@ -23,6 +23,17 @@ Item {
     property var currentObject : null
     property var currentQml : null
 
+    // Glass surface for properties panel
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 2
+        radius: theme.glassRadiusSmall
+        color: applicationAppearance.darkMode ? theme.glassSurface : Qt.rgba(0.98, 0.98, 0.99, 0.90)
+        border.color: applicationAppearance.darkMode ? theme.glassBorder : Qt.rgba(0, 0, 0, 0.06)
+        border.width: 1
+        z: -1
+    }
+
     StackView {
         id: propertiesStack
         anchors.fill: parent

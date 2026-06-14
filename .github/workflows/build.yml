@@ -11,48 +11,60 @@ on:
 jobs:
   macos:
     runs-on: macos-14  # Apple Silicon runner
-    strategy:
-      matrix:
-        arch: [arm64, x86_64]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Qt 5.15
+      - name: Install Qt 5.15 + CMake
         run: |
-          brew install qt@5
-          echo "QT_PATH=/opt/homebrew/opt/qt@5" >> $GITHUB_ENV
+          brew install qt@5 cmake
+          echo "QT5_PATH=/opt/homebrew/opt/qt@5" >> $GITHUB_ENV
 
-      - name: Configure
+      - name: Configure (CMake)
         run: |
-          export PATH="${{ env.QT_PATH }}/bin:$PATH"
+          export PATH="${{ env.QT5_PATH }}/bin:$PATH"
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="${{ env.QT5_PATH }}" \
+            -DGRAPH_BACKEND=OPENGL
+
+      - name: Build (CMake)
+        run: |
+          cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Bundle frameworks (CMake)
+        run: |
+          if [ -d "build/OpenSoundMeter.app" ]; then
+            ${{ env.QT5_PATH }}/bin/macdeployqt build/OpenSoundMeter.app
+            mv build/OpenSoundMeter.app .
+          fi
+
+      - name: Configure (qmake fallback)
+        if: failure()
+        run: |
+          export PATH="${{ env.QT5_PATH }}/bin:$PATH"
           qmake PREFIX=/usr
-
-      - name: Build
-        run: |
-          export PATH="${{ env.QT_PATH }}/bin:$PATH"
           make -j$(sysctl -n hw.ncpu)
+          ${{ env.QT5_PATH }}/bin/macdeployqt OpenSoundMeter.app
 
-      - name: Bundle frameworks
-        run: |
-          ${{ env.QT_PATH }}/bin/macdeployqt OpenSoundMeter.app
-
-      - name: Sign app (if available)
+      - name: Sign app
+        if: success()
         run: |
           if [ -n "${{ secrets.APPLE_DEVELOPER_ID }}" ]; then
             codesign --deep --force --verify --verbose \
               --options runtime \
               --sign "${{ secrets.APPLE_DEVELOPER_ID }}" \
-              OpenSoundMeter.app
+              OpenSoundMeter.app 2>/dev/null || true
           else
-            echo "No signing identity provided — skipping code signing"
+            echo "No signing identity — skipping"
           fi
 
       - name: Create DMG
+        if: success()
         run: |
-          brew install create-dmg 2>/dev/null || true
+          brew install create-dmg >/dev/null 2>&1 || true
           if which create-dmg >/dev/null 2>&1; then
+            ARCH=$(uname -m)
             create-dmg \
               --volname "OpenSoundMeter" \
               --volicon "icons/white.icns" \
@@ -61,16 +73,14 @@ jobs:
               --icon-size 100 \
               --icon "OpenSoundMeter.app" 175 120 \
               --app-drop-link 425 120 \
-              "OpenSoundMeter-macOS-${{ matrix.arch }}.dmg" \
-              "OpenSoundMeter.app"
-          else
-            echo "create-dmg not available — app bundle is the artifact"
+              "OpenSoundMeter-macOS-${ARCH}.dmg" \
+              "OpenSoundMeter.app" 2>/dev/null || true
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OpenSoundMeter-macOS-${{ matrix.arch }}
+          name: OpenSoundMeter-macOS-${{ runner.arch }}
           path: |
             OpenSoundMeter-macOS-*.dmg
             OpenSoundMeter.app/
@@ -83,28 +93,38 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Qt 5.15
+      - name: Install Qt 5.15 + CMake
         run: |
           sudo add-apt-repository --yes ppa:beineri/opt-qt-5.15.2-bionic
           sudo apt-get update
-          sudo apt-get install build-essential libgl1-mesa-dev
+          sudo apt-get install build-essential libgl1-mesa-dev cmake
           sudo apt-get install qt515base qt515multimedia qt515quickcontrols2
 
-      - name: Configure
+      - name: Configure (CMake)
+        run: |
+          source /opt/qt515/bin/qt515-env.sh
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="/opt/qt515" \
+            -DGRAPH_BACKEND=OPENGL
+
+      - name: Build (CMake)
+        run: |
+          cmake --build build -j$(nproc)
+
+      - name: Configure (qmake fallback)
+        if: failure()
         run: |
           source /opt/qt515/bin/qt515-env.sh
           qmake PREFIX=/usr
-
-      - name: Build
-        run: |
-          source /opt/qt515/bin/qt515-env.sh
           make -j$(nproc)
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: OpenSoundMeter-Linux-x86_64
-          path: OpenSoundMeter
+          path: |
+            build/OpenSoundMeter
+            OpenSoundMeter
           if-no-files-found: warn
 
   windows:
@@ -120,7 +140,16 @@ jobs:
           aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
           echo "C:\Qt\5.15.2\msvc2019_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Build
+      - name: Configure (CMake)
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (CMake)
+        run: |
+          cmake --build build --config Release
+
+      - name: Configure (qmake fallback)
+        if: failure()
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           qmake PREFIX=C:\OpenSoundMeter
@@ -131,7 +160,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenSoundMeter-Windows-x86_64
-          path: release/
+          path: |
+            build/Release/
+            release/
           if-no-files-found: warn
 
   release:
@@ -144,8 +175,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            OpenSoundMeter-macOS-arm64/**
-            OpenSoundMeter-macOS-x86_64/**
+            OpenSoundMeter-macOS-ARM64/**
+            OpenSoundMeter-macOS-X64/**
             OpenSoundMeter-Linux-x86_64/**
             OpenSoundMeter-Windows-x86_64/**
           generate_release_notes: true

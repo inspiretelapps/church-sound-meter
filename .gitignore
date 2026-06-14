@@ -78,7 +78,16 @@ Thumbs.db
 
 # Build artifacts
 /build-macos-*/
+/build/
 !*.dmg
+
+# CMake build artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+build/
+*.cmake
+!CMakeLists.txt
 
 # Generated QML/meta types
 opensoundmeter.qmltypes

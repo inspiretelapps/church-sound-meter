@@ -26,9 +26,23 @@ Item {
     property bool remoteControlled : remoteClient.controlledGenerator && remoteClient.controlledGenerator.data
     property var currentGenerator : (remoteClient.controlledGenerator && remoteClient.controlledGenerator.data ? remoteClient.controlledGenerator.data : generatorModel)
 
-
     height: remoteControlled ? 40 : 57
     width: parent.width
+
+    // Glass background
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 2
+        radius: 6
+        color: applicationAppearance.darkMode
+            ? Qt.rgba(0.18, 0.18, 0.22, 0.40)
+            : Qt.rgba(0.96, 0.96, 0.98, 0.70)
+        border.color: applicationAppearance.darkMode
+            ? Qt.rgba(1.0, 1.0, 1.0, 0.04)
+            : Qt.rgba(0, 0, 0, 0.04)
+        border.width: 1
+        z: -1
+    }
 
     ColumnLayout {
         anchors.fill: parent

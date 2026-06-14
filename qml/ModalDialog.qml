@@ -29,6 +29,17 @@ Dialog {
     onAccepted: {}
     onRejected: {}
 
+    background: Rectangle {
+        radius: 12
+        color: applicationAppearance.darkMode
+            ? Qt.rgba(0.14, 0.14, 0.18, 0.92)
+            : Qt.rgba(0.96, 0.96, 0.98, 0.95)
+        border.color: applicationAppearance.darkMode
+            ? Qt.rgba(1.0, 1.0, 1.0, 0.08)
+            : Qt.rgba(0, 0, 0, 0.06)
+        border.width: 1
+    }
+
     Item {
         focus: true
         anchors.fill: parent

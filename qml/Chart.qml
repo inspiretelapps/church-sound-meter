@@ -28,6 +28,29 @@ Item {
     property alias type: chart.type
     property alias settings: chart.settings
 
+    // Glass border around chart area
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 2
+        radius: 8
+        color: "transparent"
+        border.color: applicationAppearance.darkMode
+            ? Qt.rgba(1.0, 1.0, 1.0, 0.06)
+            : Qt.rgba(0, 0, 0, 0.04)
+        border.width: 1
+        z: -2
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 4
+        radius: 6
+        color: applicationAppearance.darkMode
+            ? Theme {}.chartBackground
+            : Qt.rgba(1.0, 1.0, 1.0, 1.0)
+        z: -1
+    }
+
     VariableChart {
         id: chart
         anchors.fill: parent

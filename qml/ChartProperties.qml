@@ -28,6 +28,7 @@ Item {
 
     RowLayout {
         spacing: 0
+        Layout.margins: 4
 
         TitledCombo {
             title: qsTr("ppo")

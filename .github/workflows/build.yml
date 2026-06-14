@@ -1,0 +1,151 @@
+name: Build
+
+on:
+  push:
+    branches: [master, main]
+    tags: ['v*']
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14  # Apple Silicon runner
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt 5.15
+        run: |
+          brew install qt@5
+          echo "QT_PATH=/opt/homebrew/opt/qt@5" >> $GITHUB_ENV
+
+      - name: Configure
+        run: |
+          export PATH="${{ env.QT_PATH }}/bin:$PATH"
+          qmake PREFIX=/usr
+
+      - name: Build
+        run: |
+          export PATH="${{ env.QT_PATH }}/bin:$PATH"
+          make -j$(sysctl -n hw.ncpu)
+
+      - name: Bundle frameworks
+        run: |
+          ${{ env.QT_PATH }}/bin/macdeployqt OpenSoundMeter.app
+
+      - name: Sign app (if available)
+        run: |
+          if [ -n "${{ secrets.APPLE_DEVELOPER_ID }}" ]; then
+            codesign --deep --force --verify --verbose \
+              --options runtime \
+              --sign "${{ secrets.APPLE_DEVELOPER_ID }}" \
+              OpenSoundMeter.app
+          else
+            echo "No signing identity provided — skipping code signing"
+          fi
+
+      - name: Create DMG
+        run: |
+          brew install create-dmg 2>/dev/null || true
+          if which create-dmg >/dev/null 2>&1; then
+            create-dmg \
+              --volname "OpenSoundMeter" \
+              --volicon "icons/white.icns" \
+              --window-pos 200 120 \
+              --window-size 600 300 \
+              --icon-size 100 \
+              --icon "OpenSoundMeter.app" 175 120 \
+              --app-drop-link 425 120 \
+              "OpenSoundMeter-macOS-${{ matrix.arch }}.dmg" \
+              "OpenSoundMeter.app"
+          else
+            echo "create-dmg not available — app bundle is the artifact"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenSoundMeter-macOS-${{ matrix.arch }}
+          path: |
+            OpenSoundMeter-macOS-*.dmg
+            OpenSoundMeter.app/
+          if-no-files-found: warn
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt 5.15
+        run: |
+          sudo add-apt-repository --yes ppa:beineri/opt-qt-5.15.2-bionic
+          sudo apt-get update
+          sudo apt-get install build-essential libgl1-mesa-dev
+          sudo apt-get install qt515base qt515multimedia qt515quickcontrols2
+
+      - name: Configure
+        run: |
+          source /opt/qt515/bin/qt515-env.sh
+          qmake PREFIX=/usr
+
+      - name: Build
+        run: |
+          source /opt/qt515/bin/qt515-env.sh
+          make -j$(nproc)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenSoundMeter-Linux-x86_64
+          path: OpenSoundMeter
+          if-no-files-found: warn
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt 5.15
+        run: |
+          choco install aqtinstall -y
+          aqt install-qt windows desktop 5.15.2 win64_msvc2019_64
+          echo "C:\Qt\5.15.2\msvc2019_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          qmake PREFIX=C:\OpenSoundMeter
+          nmake
+        shell: cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenSoundMeter-Windows-x86_64
+          path: release/
+          if-no-files-found: warn
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            OpenSoundMeter-macOS-arm64/**
+            OpenSoundMeter-macOS-x86_64/**
+            OpenSoundMeter-Linux-x86_64/**
+            OpenSoundMeter-Windows-x86_64/**
+          generate_release_notes: true

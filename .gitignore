@@ -76,6 +76,17 @@ Thumbs.db
 *.exe
 
 
+# Build artifacts
+/build-macos-*/
+!*.dmg
+
+# Generated QML/meta types
+opensoundmeter.qmltypes
+opensoundmeter_metatypes.json
+opensoundmeter_qmltyperegistrations.cpp
+*.json
+!build.yml
+
 # PVS studio
 PVS-Studio/
 PVS-Studio.cfg

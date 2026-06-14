@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-MODE="${1:-qmake}"
+MODE="${1:-cmake}"
 QT5_PATH="${QT5_PATH:-/opt/homebrew/opt/qt@5}"
 BUILD_DIR="build"
 

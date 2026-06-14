@@ -40,10 +40,11 @@ ApplicationWindow {
     property string accentColor: Material.accent
     property string foregroundColor: Material.foreground
     readonly property bool narrowWindow: width < 1024
+    readonly property var theme: Theme {}
 
     visible: true
     flags: Qt.Window
-    title: "Open Sound Meter"
+    title: "Church Sound Meter"
     Component.onCompleted: {
         if (applicationAppearance.visibility === Appearance.FullScreen) {
             return ;

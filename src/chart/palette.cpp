@@ -21,24 +21,25 @@ using namespace Chart;
 Palette::Palette(QObject *parent):
     QObject(parent),
     m_lineColor(), m_textColor(), m_backgroundColor(),
-    m_darkMode(false), m_lineWidth(1.5), m_highlightedLineWidth(3)
+    m_darkMode(true), m_lineWidth(1.8), m_highlightedLineWidth(3.5)
 {
     initColors();
 }
 void Palette::initColors() noexcept
 {
     if (m_darkMode) {
-        m_lineColor         = QColor(255, 255, 255, 40);
-        m_cursorLineColor   = QColor("#607D8B");
-        m_centerLineColor   = QColor(255, 255, 255, 128);
-        m_textColor         = QColor(255, 255, 255, 255);
-        m_backgroundColor   = QColor(Qt::black);
+        // Deep rich dark mode with subtle blue tint — modern audio tool aesthetic
+        m_backgroundColor   = QColor("#0D0D12");      // near-black with subtle blue
+        m_lineColor         = QColor(255, 255, 255, 25);  // faint grid
+        m_cursorLineColor   = QColor("#8088A0");      // muted blue-grey
+        m_centerLineColor   = QColor(255, 255, 255, 120); // semi-transparent white
+        m_textColor         = QColor("#D0D4E0");      // soft white
     } else {
-        m_lineColor         = QColor(0, 0, 0, 25);
-        m_cursorLineColor   = QColor("#B0BEC5");
-        m_centerLineColor   = QColor(0, 0, 0, 128);
-        m_textColor         = QColor(0, 0, 0, 255);
-        m_backgroundColor   = QColor(Qt::white);
+        m_backgroundColor   = QColor("#F5F5F7");      // very light warm grey
+        m_lineColor         = QColor(0, 0, 0, 20);     // subtle grid
+        m_cursorLineColor   = QColor("#9098A8");
+        m_centerLineColor   = QColor(0, 0, 0, 100);
+        m_textColor         = QColor(0, 0, 0, 230);
     }
     m_cursorLineColor.setAlpha(128);
 }

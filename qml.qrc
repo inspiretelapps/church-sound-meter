@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file alias="main.qml">qml/main.qml</file>
+        <file alias="Theme.qml">qml/Theme.qml</file>
         <file alias="Generator.qml">qml/Generator.qml</file>
         <file alias="source/Measurement.qml">qml/source/Measurement.qml</file>
         <file alias="Chart.qml">qml/Chart.qml</file>

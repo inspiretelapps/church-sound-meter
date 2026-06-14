@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Glass gradient background -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="50%" stop-color="#16213e"/>
+      <stop offset="100%" stop-color="#0f3460"/>
+    </linearGradient>
+
+    <!-- Glass highlight -->
+    <linearGradient id="glass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="40%" stop-color="rgba(255,255,255,0.05)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.0)"/>
+    </linearGradient>
+
+    <!-- Frosted glass inner glow -->
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="rgba(100,150,255,0.15)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+
+    <!-- Signal wave gradient -->
+    <linearGradient id="wave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4facfe"/>
+      <stop offset="50%" stop-color="#00f2fe"/>
+      <stop offset="100%" stop-color="#4facfe"/>
+    </linearGradient>
+
+    <linearGradient id="wave2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fa709a"/>
+      <stop offset="50%" stop-color="#fee140"/>
+      <stop offset="100%" stop-color="#fa709a"/>
+    </linearGradient>
+
+    <!-- Outer border glow -->
+    <filter id="borderGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle drop shadow -->
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="rgba(0,0,0,0.4)"/>
+    </filter>
+  </defs>
+
+  <!-- Outer rounded rect (glass container) -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96"
+        fill="url(#bg)" stroke="rgba(255,255,255,0.12)" stroke-width="2"
+        filter="url(#shadow)"/>
+
+  <!-- Inner glass highlight -->
+  <rect x="16" y="16" width="480" height="240" rx="96" ry="96"
+        fill="url(#glass)"/>
+
+  <!-- Inner glow overlay -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96"
+        fill="url(#glow)"/>
+
+  <!-- Sound wave visualizations -->
+  <!-- Frequency sweep arc (left channel) -->
+  <path d="M 80 380
+           C 100 280, 120 180, 160 160
+           C 200 140, 220 180, 240 200
+           C 260 220, 280 160, 320 140
+           C 360 120, 380 180, 400 200"
+        fill="none" stroke="url(#wave1)" stroke-width="6" stroke-linecap="round"
+        stroke-linejoin="round" opacity="0.9"/>
+
+  <!-- Right channel / harmonic -->
+  <path d="M 80 420
+           C 110 380, 130 320, 160 300
+           C 190 280, 210 310, 240 320
+           C 270 330, 290 280, 320 260
+           C 350 240, 370 290, 400 310"
+        fill="none" stroke="url(#wave2)" stroke-width="4" stroke-linecap="round"
+        stroke-linejoin="round" opacity="0.7"/>
+
+  <!-- Third subtle harmonic -->
+  <path d="M 100 450
+           C 130 430, 150 400, 180 390
+           C 210 380, 230 400, 260 410
+           C 290 420, 310 390, 340 380
+           C 370 370, 390 400, 410 410"
+        fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"
+        stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Cursor / marker line -->
+  <line x1="200" y1="130" x2="200" y2="430"
+        stroke="rgba(255,255,255,0.25)" stroke-width="2"
+        stroke-dasharray="8,6" opacity="0.6"/>
+
+  <!-- Dot on the cursor intersection (measurement point) -->
+  <circle cx="200" cy="160" r="8" fill="#4facfe" opacity="0.9" filter="url(#borderGlow)"/>
+
+  <!-- Corner glow accents -->
+  <path d="M 40 40 L 40 80 M 40 40 L 80 40"
+        fill="none" stroke="rgba(79,172,254,0.4)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 472 40 L 472 80 M 472 40 L 432 40"
+        fill="none" stroke="rgba(250,112,154,0.4)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 40 472 L 40 432 M 40 472 L 80 472"
+        fill="none" stroke="rgba(250,112,154,0.4)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 472 472 L 472 432 M 472 472 L 432 472"
+        fill="none" stroke="rgba(79,172,254,0.4)" stroke-width="3" stroke-linecap="round"/>
+</svg>

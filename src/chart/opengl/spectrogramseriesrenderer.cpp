@@ -90,7 +90,9 @@ void SpectrogramSeriesRenderer::renderSeries()
     row.time = static_cast<int>(m_timer.restart());
     row.data.reserve(m_pointsPerOctave * 11);
     float value = 0.f;
-    static const QColor qred("#F44336"), qgreen("#8BC34A"), qblue("#2196F3");
+    // Modern "plasma" colormap: deep purple → magenta → orange → yellow
+    static const QColor c0("#0d0887"), c1("#6a00a8"), c2("#b12a90"),
+                        c3("#e16462"), c4("#fca636"), c5("#f0f921");
     QColor pointColor;
 
     auto mix = [] (const QColor & first, const QColor & second, qreal k) {
@@ -99,6 +101,14 @@ void SpectrogramSeriesRenderer::renderSeries()
         mixedColor.setBlueF( k * (second.blueF()  - first.blueF())  + first.blueF());
         mixedColor.setGreenF(k * (second.greenF() - first.greenF()) + first.greenF());
         return mixedColor;
+    };
+    auto plasma = [&mix](qreal t) -> QColor {
+        t = qBound(0.0, t, 1.0);
+        if (t < 0.2) return mix(c0, c1, t / 0.2);
+        if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
+        if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
+        if (t < 0.8) return mix(c3, c4, (t - 0.6) / 0.2);
+        return mix(c4, c5, (t - 0.8) / 0.2);
     };
     auto accumalte = [m_source = m_source, &value] (const unsigned int &i) {
         if (i == 0) {
@@ -120,15 +130,13 @@ void SpectrogramSeriesRenderer::renderSeries()
         }
 
         if (value < m_min) {
-            // transparent -> blue
-            pointColor = qblue;
-            alpha = (value - floor) / (m_min   - floor);
-        } else if (value < m_mid) {
-            // blue -> green
-            pointColor = mix(qblue, qgreen, static_cast<qreal>((value - m_min) / (m_mid - m_min)));
-        } else  {
-            // green -> red
-            pointColor = mix(qgreen, qred, static_cast<qreal>((value - m_mid) / (m_max - m_mid)));
+            // fade in from "transparent" using dark purple base
+            pointColor = c0;
+            alpha = (value - floor) / (m_min - floor);
+        } else {
+            // plasma colormap: purple → magenta → orange → gold
+            qreal t = (value - m_min) / (m_max - m_min);
+            pointColor = plasma(t);
         }
 
         historyPoint rgb;

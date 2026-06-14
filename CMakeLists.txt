@@ -7,7 +7,7 @@ project(OpenSoundMeter
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTORCC ON)
 
 # ---- Find Qt ----
@@ -150,36 +150,76 @@ set(CORE_SOURCES
     src/math/deconvolution.cpp
 )
 
-# ---- Architecture math ----
+# ---- Architecture-specific math ----
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64|arm64")
     message(STATUS "Building for ARM — ARM math (header-only)")
 else()
     message(STATUS "Building for x86_64 — SSE math")
-    set(CORE_SOURCES ${CORE_SOURCES} src/math/ssemath.cpp)
+    list(APPEND CORE_SOURCES src/math/ssemath.cpp)
 endif()
 
-# ---- Create executable ----
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_add_executable(${PROJECT_NAME}
-        ${CORE_SOURCES}
-        ${QRC_FILES}
-    )
-else()
-    add_executable(${PROJECT_NAME}
-        ${CORE_SOURCES}
-        ${QRC_FILES}
-    )
+# ---- MOC headers (non-recursive; platform-filtered) ----
+file(GLOB CORE_HEADERS
+    ${CMAKE_SOURCE_DIR}/src/*.h
+    ${CMAKE_SOURCE_DIR}/src/abstract/*.h
+    ${CMAKE_SOURCE_DIR}/src/audio/*.h
+    ${CMAKE_SOURCE_DIR}/src/chart/*.h
+    ${CMAKE_SOURCE_DIR}/src/common/*.h
+    ${CMAKE_SOURCE_DIR}/src/container/*.h
+    ${CMAKE_SOURCE_DIR}/src/filesystem/*.h
+    ${CMAKE_SOURCE_DIR}/src/filesystem/plugins/widgetdialogplugin.h
+    ${CMAKE_SOURCE_DIR}/src/generator/*.h
+    ${CMAKE_SOURCE_DIR}/src/math/*.h
+    ${CMAKE_SOURCE_DIR}/src/meta/*.h
+    ${CMAKE_SOURCE_DIR}/src/model/*.h
+    ${CMAKE_SOURCE_DIR}/src/remote/*.h
+    ${CMAKE_SOURCE_DIR}/src/remote/items/*.h
+    ${CMAKE_SOURCE_DIR}/src/shared/*.h
+    ${CMAKE_SOURCE_DIR}/src/source/*.h
+)
+
+# Platform audio plugins — add only the one for this platform
+if(APPLE)
+    list(APPEND CORE_HEADERS ${CMAKE_SOURCE_DIR}/src/audio/plugins/coreaudio.h)
+    if(IOS)
+        list(APPEND CORE_HEADERS
+            ${CMAKE_SOURCE_DIR}/src/audio/plugins/audiosession.h
+            ${CMAKE_SOURCE_DIR}/src/filesystem/plugins/iosdialogplugin.h
+        )
+    endif()
+elseif(WIN32)
+    list(APPEND CORE_HEADERS ${CMAKE_SOURCE_DIR}/src/audio/plugins/wasapi.h)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/../asiosdk")
+        list(APPEND CORE_HEADERS ${CMAKE_SOURCE_DIR}/src/audio/plugins/asioplugin.h)
+    endif()
+elseif(UNIX AND NOT APPLE)
+    list(APPEND CORE_HEADERS ${CMAKE_SOURCE_DIR}/src/audio/plugins/alsa.h)
 endif()
+
+# Needed by MOC when processing measurement.h
+add_compile_definitions(NO_API_REVISION=1)
+
+# Individual MOC files (not combined, to prevent include leaking between namespaces)
+qt_wrap_cpp(MOC_SOURCES ${CORE_HEADERS})
+
+# ---- Create executable ----
+add_executable(${PROJECT_NAME}
+    ${CORE_SOURCES}
+    ${MOC_SOURCES}
+    ${QRC_FILES}
+)
 
 # ---- Defines ----
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_DEPRECATED_WARNINGS
     QT_MESSAGELOGCONTEXT
     APP_GIT_VERSION="${APP_GIT_VERSION}"
+    NO_API_REVISION=1
 )
 
 # ---- Include paths ----
 target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/meta
     ${CMAKE_SOURCE_DIR}/src/chart
@@ -208,7 +248,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 if(APPLE)
     target_sources(${PROJECT_NAME} PRIVATE src/audio/plugins/coreaudio.cpp)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        "-framework CoreAudio" "-framework AudioToolbox"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+        "-framework CoreFoundation"
     )
     if(IOS)
         target_sources(${PROJECT_NAME} PRIVATE
@@ -232,7 +274,7 @@ elseif(WIN32)
         )
         target_link_libraries(${PROJECT_NAME} PRIVATE Advapi32)
     endif()
-elseif(UNIX)
+elseif(UNIX AND NOT APPLE)
     target_sources(${PROJECT_NAME} PRIVATE src/audio/plugins/alsa.cpp)
     find_package(ALSA REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE ALSA::ALSA)
@@ -251,7 +293,10 @@ if(GRAPH_BACKEND STREQUAL "METAL" AND APPLE)
     message(STATUS "Graphics backend: Metal")
     target_compile_definitions(${PROJECT_NAME} PRIVATE GRAPH_METAL)
     target_include_directories(${PROJECT_NAME} PRIVATE src/chart/metal)
-    target_sources(${PROJECT_NAME} PRIVATE
+    file(GLOB METAL_HEADERS ${CMAKE_SOURCE_DIR}/src/chart/metal/*.h)
+    qt_wrap_cpp(METAL_MOC ${METAL_HEADERS})
+    target_sources(${PROJECT_NAME} PRIVATE ${METAL_MOC}
+        # Metal backend sources:
         src/chart/metal/rtaseriesnode.mm
         src/chart/metal/coherenceseriesnode.mm
         src/chart/metal/groupdelayseriesnode.mm
@@ -286,12 +331,14 @@ if(GRAPH_BACKEND STREQUAL "METAL" AND APPLE)
             ${CMAKE_BINARY_DIR}/shaders.air -o ${METALLIB}
         DEPENDS ${CMAKE_SOURCE_DIR}/src/chart/metal/shaders.metal
     )
-    set(CUSTOM_BUNDLE_RESOURCES ${METALLIB})
 else()
     message(STATUS "Graphics backend: OpenGL")
     target_compile_definitions(${PROJECT_NAME} PRIVATE GRAPH_OPENGL)
     target_include_directories(${PROJECT_NAME} PRIVATE src/chart/opengl)
-    target_sources(${PROJECT_NAME} PRIVATE
+    file(GLOB OPENGL_HEADERS ${CMAKE_SOURCE_DIR}/src/chart/opengl/*.h)
+    qt_wrap_cpp(OPENGL_MOC ${OPENGL_HEADERS})
+    target_sources(${PROJECT_NAME} PRIVATE ${OPENGL_MOC}
+        # OpenGL renderer sources:
         src/chart/opengl/plotseriescreator.cpp
         src/chart/opengl/seriesfbo.cpp
         src/chart/opengl/rtaseriesrenderer.cpp
@@ -314,14 +361,6 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 endif()
 
-# ---- QML module ----
-set_property(TARGET ${PROJECT_NAME} PROPERTY
-    QT_QML_IMPORT_NAME "OpenSoundMeterModule"
-)
-set_property(TARGET ${PROJECT_NAME} PROPERTY
-    QT_QML_IMPORT_MAJOR_VERSION 1
-)
-
 # ---- macOS bundle ----
 if(APPLE AND NOT IOS)
     set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -336,7 +375,6 @@ if(APPLE AND NOT IOS)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/info.entitlements"
     )
-    # Copy Metal shader into bundle
     if(GRAPH_BACKEND STREQUAL "METAL")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -345,7 +383,6 @@ if(APPLE AND NOT IOS)
             DEPENDS ${METALLIB}
         )
     endif()
-    # Microphone usage plist
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND plutil -replace NSMicrophoneUsageDescription
             -string "Audio measurement"
@@ -359,10 +396,7 @@ elseif(IOS)
     )
 elseif(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        LINK_FLAGS "/ENTRY:mainCRTStartup"
-    )
-elseif(UNIX)
+elseif(UNIX AND NOT APPLE)
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
     install(FILES ${CMAKE_SOURCE_DIR}/OpenSoundMeter.desktop DESTINATION share/applications)
     install(FILES ${CMAKE_SOURCE_DIR}/icons/white.png DESTINATION share/pixmaps)

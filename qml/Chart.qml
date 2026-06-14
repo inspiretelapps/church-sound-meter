@@ -41,12 +41,13 @@ Item {
         z: -2
     }
 
+    // Glass chart background — palette.cpp handles actual chart dark mode
     Rectangle {
         anchors.fill: parent
         anchors.margins: 4
-        radius: 6
+        radius: 4
         color: applicationAppearance.darkMode
-            ? Theme {}.chartBackground
+            ? Qt.rgba(0.05, 0.05, 0.08, 1.0)
             : Qt.rgba(1.0, 1.0, 1.0, 1.0)
         z: -1
     }

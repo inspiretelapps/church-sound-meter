@@ -39,6 +39,9 @@
 #include "audio/devicemodel.h"
 #include "common/appearance.h"
 #include "common/autosaver.h"
+#include "common/recentfilesmodel.h"
+#include "generator/channelmodel.h"
+#include "model/metertablemodel.h"
 #include "filesystem/dialog.h"
 #include "remote/server.h"
 #include "remote/remoteclient.h"
@@ -116,6 +119,11 @@ int main(int argc, char *argv[])
     qmlRegisterType<Notifier>("OpenSoundMeter", 1, 0, "Notifier");
     qmlRegisterType<Chart::MeterPlot>("OpenSoundMeter", 1, 0, "MeterPlot");
     qmlRegisterType<Source::Group>("OpenSoundMeter", 1, 0, "SourceGroup");
+    // Register the QML module URI and types (the .pro QML_IMPORT_NAME equivalent for CMake)
+    qmlRegisterModule("OpenSoundMeterModule", 1, 0);
+    qmlRegisterType<RecentFilesModel>("OpenSoundMeterModule", 1, 0, "RecentFilesModel");
+    qmlRegisterType<GeneratorChannelModel>("OpenSoundMeterModule", 1, 0, "GeneratorChannelModel");
+    qmlRegisterType<MeterTableModel>("OpenSoundMeterModule", 1, 0, "MeterTableModel");
 #ifdef Q_OS_IOS
     //replace for QQuickControls2 FileDialog:
     qmlRegisterUncreatableMetaObject(filesystem::staticMetaObject, "OpenSoundMeter", 1, 0, "Filesystem",
